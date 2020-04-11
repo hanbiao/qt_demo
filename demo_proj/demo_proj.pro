@@ -9,6 +9,8 @@ QT       += core gui
 #加入widgets模块
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+greaterThan(QT_MAJOR_VERSION, 1): QT += serialport
+
 TARGET = demo_proj
 TEMPLATE = app
 
