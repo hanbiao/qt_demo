@@ -4,6 +4,9 @@
 #include <QPlainTextEdit>
 #include <QList>
 #include <QByteArray>
+#include <QSerialPort>
+
+QSerialPort usedPort;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -24,8 +27,84 @@ void MainWindow::on_comboBox_port_currentIndexChanged(int index)
 
 void MainWindow::on_pushButton_open_clicked()
 {
-    return;
+    int portCnt;
+    bool convertRtvl;
+    /*
+     * By default, for an empty combo box, counter property has a value of 0
+     */
+    portCnt = ui->comboBox_port->count();
+
+    if(portCnt > 0)
+    {
+        /*
+         * After setting the port, you can open it in read-only (r/o), write-only (w/o), or read-write (r/w) mode
+         * returns true if successful; otherwise returns false and sets
+         * an error code which can be obtained by calling the error() method
+         */
+        if(usedPort.open(QIODevice::ReadWrite))
+        {
+             int dataBit, stopBit;
+             QString parityBit;
+             usedPort.setBaudRate(ui->comboBox_baudrate->currentText().toLong(&convertRtvl,10));
+             dataBit = ui->comboBox_databit->currentText().toLong(&convertRtvl,10);
+             switch(dataBit)
+             {
+                case 7:
+                    usedPort.setDataBits(QSerialPort::Data7);
+                 break;
+                case 8:
+                    usedPort.setDataBits(QSerialPort::Data8);
+                 break;
+                default:
+                    break;
+             }
+             parityBit = ui->comboBox_databit->currentText();
+             if(parityBit == "NONE")
+             {
+                 usedPort.setParity(QSerialPort::NoParity);
+             }else if(parityBit == "EVEN")
+             {
+                 usedPort.setParity(QSerialPort::EvenParity);
+             }else if(parityBit == "ODD")
+             {
+                 usedPort.setParity(QSerialPort::OddParity);
+             }
+             stopBit = ui->comboBox_stopbit->currentText().toLong(&convertRtvl,10);
+             switch(stopBit)
+             {
+                case 1:
+                 usedPort.setStopBits(QSerialPort::OneStop);
+                 break;
+                case 2:
+                 usedPort.setStopBits(QSerialPort::TwoStop);
+                 break;
+                default:
+                 break;
+             }
+             usedPort.setFlowControl(QSerialPort::NoFlowControl);
+
+             usedPort.clearError();
+             usedPort.clear();
+             //connect(&m_reader, SIGNAL(readyRead()), this, SLOT(ReadDataInputSlot()));
+             ui->plainTextEdit->appendPlainText("Open serialPort success");
+        }
+        else
+        {
+            ui->plainTextEdit->appendPlainText("Open serialPort error");
+        }
+    }
+    else
+    {
+        ui->plainTextEdit->appendPlainText("No serialPort avariable now, Plese check first.");
+    }
+
 }
+
+void MainWindow::ReadDataInputSlot()
+{
+    QByteArray arr = usedPort.readAll();
+}
+
 
 void MainWindow::on_pushButton_check_clicked()
 {
@@ -64,8 +143,6 @@ void MainWindow::on_pushButton_check_clicked()
     ui->plainTextEdit->appendPlainText(returnedPlainText);
 
 
-
-
     if(avariablePortList.isEmpty())
     {
         ui->plainTextEdit->setPlainText("No SerialPort Avaliable!");
@@ -83,6 +160,7 @@ void MainWindow::on_pushButton_check_clicked()
         serialPortDescription = avariablePortList.at(i).description();
         ui->plainTextEdit->appendPlainText("description:   " + serialPortDescription);
         ui->plainTextEdit->appendPlainText("portname:   " + avariablePortList.at(i).portName());
+        ui->comboBox_port->addItem(avariablePortList.at(i).portName());
         ui->plainTextEdit->appendPlainText("serialnumber:   " + avariablePortList.at(i).serialNumber());
         /*
          * Returns a list of available standard baud rates supported by the target platform.
@@ -94,4 +172,9 @@ void MainWindow::on_pushButton_check_clicked()
             ui->plainTextEdit->insertPlainText(QByteArray::number(bardRate, 10) + "/");
         }
     }
+    /*
+     * Sets the port which stored in the serial port info instance serialPortInfo.
+     */
+    usedPort.setPort(avariablePortList.first());
+
 }

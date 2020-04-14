@@ -22,8 +22,11 @@ private slots:
 
     void on_pushButton_check_clicked();
 
+    void ReadDataInputSlot();
+
 private:
     Ui::MainWindow *ui;
+    //QSerialPort usedPort;
 };
 
 #endif // MAINWINDOW_H
