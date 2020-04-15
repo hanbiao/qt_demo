@@ -82,10 +82,22 @@ void MainWindow::on_pushButton_open_clicked()
                  break;
              }
              usedPort.setFlowControl(QSerialPort::NoFlowControl);
-
+             /*
+              * This property SerialPortError holds the error status of the serial port.
+              * this property can be used to figure out the reason why the operation failed
+              * The error code is set to the default QSerialPort::NoError after a call to clearError()
+              */
              usedPort.clearError();
+             /*
+              * Discards all characters from the output or input buffer,
+              * terminate pending read or write
+              */
              usedPort.clear();
-             //connect(&m_reader, SIGNAL(readyRead()), this, SLOT(ReadDataInputSlot()));
+             /*
+              * This signal is emitted once every time new data is available for reading from the device.
+              * such as when a new block of data has been appended to your device
+              */
+             connect(&usedPort, SIGNAL(readyRead()), this, SLOT(ReadDataInputSlot()));
              ui->plainTextEdit->appendPlainText("Open serialPort success");
         }
         else
@@ -102,7 +114,13 @@ void MainWindow::on_pushButton_open_clicked()
 
 void MainWindow::ReadDataInputSlot()
 {
-    QByteArray arr = usedPort.readAll();
+    /*
+     * Reads all remaining data from the device, and returns it as a byte array.
+     * This function has no way of reporting errors
+     */
+    QByteArray arr = usedPort.readAll().toHex();
+    QString showData(arr);
+    ui->plainTextEdit->appendPlainText("Print Input Data: " + showData);
 }
 
 
